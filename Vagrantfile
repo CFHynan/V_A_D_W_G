@@ -9,6 +9,7 @@ Vagrant.configure("2") do |config|
   
   config.vm.define :precise64 do |precise64|
     precise64.vm.provision :shell, path: "bootstrap.sh"
+    precise64.vm.network :forwarded_port, guest: 80, host: 4567
   end
 
   # Use the cachier.
