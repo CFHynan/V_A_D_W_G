@@ -5,6 +5,13 @@ Vagrant.configure("2") do |config|
 
   config.vm.box = "hashicorp/precise64" 
   
+  # Fix non-impacting tty error message upon provisioning: '==> precise64: stdin: is not a tty'.
+
+  config.vm.provision "fix-no-tty", type: "shell" do |s|
+    s.privileged = false
+    s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
+  end
+
   # Set machine name and bootstrap.
   
   config.vm.define :precise64 do |precise64|
