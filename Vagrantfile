@@ -12,12 +12,17 @@ Vagrant.configure("2") do |config|
     s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
   end
 
-  # Set machine name and bootstrap.
+  # Create Ansible Control Machine - set VM name and bootstrap it.
   
-  config.vm.define :precise64 do |precise64|
-    precise64.vm.provision :shell, path: "bootstrap.sh"
-    precise64.vm.network :forwarded_port, guest: 80, host: 1234 
-    precise64.vm.network :forwarded_port, guest: 443, host: 5678 
+  config.vm.define :ACM do |acm|
+    acm.vm.provision :shell, path: "bootstrap.sh"
+  end
+
+  # Create a target VM to configure and open up ports to host OS.
+
+  config.vm.define :Target1 do |target1|
+    target1.vm.network :forwarded_port, guest: 80, host: 1234 
+    target1.vm.network :forwarded_port, guest: 443, host: 5678 
   end
 
   # Use the cachier.
