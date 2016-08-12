@@ -4,9 +4,10 @@
 
 if [ ! -f /usr/bin/ansible-playbook ]
 then
-  apt-get install software-properties-common
-  apt-add-repository ppa:ansible/ansible
   apt-get update
+#  For >= v12.10, otherwise use python below: apt-get install -y software-properties-common
+  apt-get install -y python-software-properties
+  apt-add-repository -y ppa:ansible/ansible
   apt-get install -y ansible
 fi
 
