@@ -12,15 +12,17 @@ Vagrant.configure("2") do |config|
     s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
   end
 
-  # Create Ansible Control Machine - set VM name and bootstrap it.
+  # Create Ansible Control Machine - set VM name, private IP, and bootstrap it.
   
   config.vm.define :ACM do |acm|
+    acm.vm.network "private_network", ip: "10.0.0.4"
     acm.vm.provision :shell, path: "bootstrap.sh"
   end
 
-  # Create a target VM to configure and open up ports to host OS.
+  # Create a target VM to configure, set VM name, private IP, and open up ports to host OS.
 
   config.vm.define :Target1 do |target1|
+    target1.vm.network "private_network", ip: "10.0.0.5"
     target1.vm.network :forwarded_port, guest: 80, host: 1234 
     target1.vm.network :forwarded_port, guest: 443, host: 5678 
   end
