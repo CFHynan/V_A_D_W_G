@@ -4,7 +4,7 @@
 Vagrant.configure("2") do |config|
 
   config.vm.box = "hashicorp/precise64" 
-  
+ 
   # Fix non-impacting tty error message upon provisioning: '==> precise64: stdin: is not a tty'.
 
   config.vm.provision "fix-no-tty", type: "shell" do |s|
@@ -12,10 +12,11 @@ Vagrant.configure("2") do |config|
     s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
   end
 
-  # Create Ansible Control Machine - set VM name, private IP, and bootstrap it.
-  
+  # Create Ansible Control Machine - set VM name, private IP, copy over private key, and bootstrap it.
+ 
   config.vm.define :ACM do |acm|
     acm.vm.network "private_network", ip: "10.0.0.4"
+    acm.vm.provision "file", source: "M:/ITRepo/Integration/GitRepos/Vagrant_and_Ansible/.vagrant/machines/Target1/virtualbox/private_key", destination: "~/.ssh/id_rsa"
     acm.vm.provision :shell, path: "bootstrap.sh"
   end
 
@@ -32,7 +33,7 @@ Vagrant.configure("2") do |config|
   if Vagrant.has_plugin?("vagrant-cachier")
      config.cache.scope = :box
   end
-  
+ 
 end
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
