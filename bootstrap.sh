@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Set SSH permissions for private key.
+
+chmod 600 /home/vagrant/.ssh/id_rsa
+
 # Install Ansible.
 
 if [ ! -f /usr/bin/ansible-playbook ]
