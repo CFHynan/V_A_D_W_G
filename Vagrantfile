@@ -3,21 +3,19 @@
 
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "hashicorp/precise64" 
+  config.vm.box = "ubuntu/trusty64" 
  
-  # Fix non-impacting tty error message upon provisioning: '==> precise64: stdin: is not a tty'.
+  # Use the cachier per VM.
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+     config.cache.scope = :machine
+  end
+
+  # Fix non-impacting tty error message upon provisioning: 'stdin: is not a tty'.
 
   config.vm.provision "fix-no-tty", type: "shell" do |s|
     s.privileged = false
     s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
-  end
-
-  # Create Ansible Control Machine - set VM name, private IP, copy over private key, and bootstrap it.
- 
-  config.vm.define :ACM do |acm|
-    acm.vm.network "private_network", ip: "10.0.0.4"
-    acm.vm.provision "file", source: "M:/ITRepo/Integration/GitRepos/Vagrant_and_Ansible/.vagrant/machines/Target1/virtualbox/private_key", destination: "~/.ssh/id_rsa"
-    acm.vm.provision :shell, path: "bootstrap.sh"
   end
 
   # Create a target VM to configure, set VM name, private IP, and open up ports to host OS.
@@ -28,10 +26,11 @@ Vagrant.configure("2") do |config|
     target1.vm.network :forwarded_port, guest: 443, host: 5678 
   end
 
-  # Use the cachier.
-
-  if Vagrant.has_plugin?("vagrant-cachier")
-     config.cache.scope = :box
+  # Create Ansible Control Machine - set VM name, private IP, and bootstrap it.
+ 
+  config.vm.define :ACM do |acm|
+    acm.vm.network "private_network", ip: "10.0.0.4"
+    acm.vm.provision :shell, path: "bootstrap.sh"
   end
  
 end
