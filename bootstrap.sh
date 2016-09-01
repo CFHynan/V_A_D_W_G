@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-# Set SSH permissions for private key.
+# Copy and set SSH permissions for private key.
 
+cp /vagrant/.vagrant/machines/Target1/virtualbox/private_key /home/vagrant/.ssh/id_rsa
+chown vagrant:vagrant /home/vagrant/.ssh/id_rsa
 chmod 600 /home/vagrant/.ssh/id_rsa
 
 # Install and configure Ansible.
