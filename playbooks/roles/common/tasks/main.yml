@@ -1,11 +1,35 @@
 ---
 # file: roles/common/tasks/main.yml
+
+# Docker installation.
+
 - name: Add docker apt key
   apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
+
 - name: Update apt with repository
   apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-trusty main' state=present
+
 - name: Inform package manager
   apt: update_cache=yes 
+
 - name: Install Docker
   apt: pkg=docker-engine force=yes 
+
+# Weave installation.
+
+- name: Get Weave
+  get_url:
+    url: https://git.io/weave
+    dest: /usr/local/bin/weave
+    mode: 0755
+
+- name: Install and launch Weave 1
+  shell: if [ $(docker ps -a | grep -c weaveworks) != 5 ]; then weave launch; fi
+  run_once: true
+  delegate_to: 10.0.0.5
+
+- name: Install and launch Weave 2
+  shell: if [ $(docker ps -a | grep -c weaveworks) != 5 ]; then weave launch 10.0.0.5; fi
+  run_once: true
+  delegate_to: 10.0.0.6
 
