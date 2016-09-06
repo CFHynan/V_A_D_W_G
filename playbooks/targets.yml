@@ -1,5 +1,6 @@
 ---
 # file: targets.yml
+
 - hosts: Targets
   become: true
   become_user: root
