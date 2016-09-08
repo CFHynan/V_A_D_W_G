@@ -22,14 +22,11 @@ Vagrant.configure("2") do |config|
 
   config.vm.define :Target1 do |target1|
     target1.vm.network "private_network", ip: "10.0.0.5"
-    #target1.vm.network :forwarded_port, guest: 80, host: 1234 
-    #target1.vm.network :forwarded_port, guest: 443, host: 5678 
+    target1.vm.network :forwarded_port, guest: 80, host: 1234 
   end
 
   config.vm.define :Target2 do |target2|
     target2.vm.network "private_network", ip: "10.0.0.6"
-    #target2.vm.network :forwarded_port, guest: 80, host: 1234 
-    #target2.vm.network :forwarded_port, guest: 443, host: 5678 
   end
 
   # Create Ansible Control Machine - set VM name, private IP, bootstrap, and run playbook.
