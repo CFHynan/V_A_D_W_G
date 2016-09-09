@@ -5,6 +5,13 @@
   become: true
   become_user: root
   gather_facts: false
+  vars:
+    EXPGOPATH:
+      GOPATH: /usr/local/gows
+    ROOTGOPATH:
+      /usr/local/gows
+    ROOTGOCODE:
+      /vagrant/gocode/src
   roles:
   - common
 
