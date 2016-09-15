@@ -6,6 +6,8 @@
   become_user: root
   gather_facts: false
   vars:
+    ROOTGOINSTALL:
+      /usr/local/go
     EXPGOPATH:
       GOPATH: /usr/local/gows
     ROOTGOPATH:
