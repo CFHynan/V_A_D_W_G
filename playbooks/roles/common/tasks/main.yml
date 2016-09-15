@@ -24,12 +24,68 @@
     mode: 0755
 
 - name: Install and launch Weave 1
-  shell: if [ $(docker ps -a | grep -c weaveworks) != 5 ]; then weave launch; fi
+  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16; fi
   run_once: true
   delegate_to: 10.0.0.5
 
 - name: Install and launch Weave 2
-  shell: if [ $(docker ps -a | grep -c weaveworks) != 5 ]; then weave launch 10.0.0.5; fi
+  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16 10.0.0.5; fi
   run_once: true
   delegate_to: 10.0.0.6
+
+# Install and compile Go at v1.4 to allow for easier creation of static binaries (Target 1).
+
+- name: Clone Go repo
+  command: "{{ item }}"
+  with_items:
+    - rm -rf "{{ ROOTGOINSTALL }}"
+    - mkdir "{{ ROOTGOINSTALL }}" 
+    - git clone https://go.googlesource.com/go "{{ ROOTGOINSTALL }}" 
+  run_once: true
+  delegate_to: 10.0.0.5
+
+- name: Checkout Go v1.4
+  git: repo=/usr/local/go/.git
+       dest=/usr/local/go
+       version=go1.4
+  run_once: true
+  delegate_to: 10.0.0.5
+
+- name: Compile Go 
+  shell: CGO_ENABLED=0 ./make.bash 
+  args:
+    chdir: /usr/local/go/src
+  run_once: true
+  delegate_to: 10.0.0.5
+
+# Create Go workspace, get dependencies and make static Go binary (Target 1).
+
+- name: Set Go workspace and get the gorilla
+  environment:
+    "{{ EXPGOPATH }}"     
+  shell: go get github.com/gorilla/mux
+  run_once: true
+  delegate_to: 10.0.0.5
+
+- name: Copy Go source to workspace 
+  command: "{{ item }}"
+  with_items:
+    - rm -rf "{{ ROOTGOPATH }}"/src/myip
+    - mkdir "{{ ROOTGOPATH }}"/src/myip
+    - cp "{{ ROOTGOCODE }}"/myip/myip.go "{{ ROOTGOPATH }}"/src/myip 
+  run_once: true
+  delegate_to: 10.0.0.5
+
+- name: Make static Go binary (REST service)
+  environment:
+    "{{ EXPGOPATH }}"
+  shell: CGO_ENABLED=0 "{{ ROOTGOINSTALL }}"/bin/go install -a -installsuffix cgo myip
+  run_once: true
+  delegate_to: 10.0.0.5
+
+# Create Docker image with Go binary.
+
+- name:
+
+
 
