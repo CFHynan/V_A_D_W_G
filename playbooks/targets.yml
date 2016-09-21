@@ -6,6 +6,8 @@
   become_user: root
   gather_facts: false
   vars:
+    USRLOCALPATH:
+      /usr/local
     ROOTGOINSTALL:
       /usr/local/go
     EXPGOPATH:
@@ -14,6 +16,8 @@
       /usr/local/gows
     ROOTGOCODE:
       /vagrant/gocode/src
+    ROOTDOCKER:
+      /vagrant/docker
   roles:
   - common
 
