@@ -1,0 +1,4 @@
+FROM denada 
+ADD ./getip /
+CMD ["/getip"]
+
