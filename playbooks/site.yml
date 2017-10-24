@@ -1,3 +1,2 @@
 ---
-- include: targets.yml
-
+- import_playbook: targets.yml
