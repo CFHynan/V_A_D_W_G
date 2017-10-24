@@ -6,4 +6,3 @@ IdentityFile ~/.ssh/id_rsa_1
 
 Host 10.0.0.6
 IdentityFile ~/.ssh/id_rsa_2
-
