@@ -5,15 +5,39 @@
 
 - name: Add docker apt key
   apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
+  tags:
+    - Add_Docker_Key
 
 - name: Update apt with repository
-  apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-trusty main' state=present
-
+  apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-zesty main' state=present
+  tags:
+    - Add_Docker_Repo
+  
 - name: Inform package manager
-  apt: update_cache=yes 
+  apt: update_cache=yes
+  tags:
+    - Inform_Pkg_Mgr
 
 - name: Install Docker
-  apt: pkg=docker-engine force=yes 
+  apt: pkg=docker-engine force=yes
+  tags:
+    - Inst_Docker
+
+- name: Docker registry fix # See: github.com/docker/distribution/issues/1874
+  shell: cp "{{ ROOTDOCKER }}"/daemon.json /etc/docker;
+         service docker restart
+  run_once: true
+  delegate_to: 10.0.0.6
+  tags:
+    - Docker_Reg_Fix
+
+- name: Pull and run local Docker image registry container
+  shell: docker pull registry:latest;
+         docker run -d -p 5000:5000 registry:latest
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Make_Docker_Reg
 
 # Weave installation.
 
@@ -22,70 +46,170 @@
     url: https://git.io/weave
     dest: /usr/local/bin/weave
     mode: 0755
+  tags:
+    - Get_Weave
 
-- name: Install and launch Weave 1
+- name: Install and launch a Weave Net (subnet allocation) - Target1
   shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16; fi
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Inst_Weave_1
 
-- name: Install and launch Weave 2
+- name: Install and launch a Weave Net (subnet allocation) - Target2
   shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16 10.0.0.5; fi
   run_once: true
   delegate_to: 10.0.0.6
+  tags:
+    - Inst_Weave_2
 
-# Install and compile Go at v1.4 to allow for easier creation of static binaries (Target 1).
+# Install and compile Go at v1.4 (go1.4-bootstrap-20170531) => v1.7 to allow for dependency compatibility and the creation of static binaries (Target 1).
 
-- name: Clone Go repo
-  command: "{{ item }}"
-  with_items:
-    - rm -rf "{{ ROOTGOINSTALL }}"
-    - mkdir "{{ ROOTGOINSTALL }}" 
-    - git clone https://go.googlesource.com/go "{{ ROOTGOINSTALL }}" 
+- name: Clone Go repo 1
+  shell: rm -rf "{{ ROOTGOINSTALL }}";
+         mkdir "{{ ROOTGOINSTALL }}";
+         git clone https://go.googlesource.com/go "{{ ROOTGOINSTALL }}"
+  args:
+    warn: no
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Clone_1
 
 - name: Checkout Go v1.4
   git: repo=/usr/local/go/.git
        dest=/usr/local/go
-       version=go1.4
+       version=release-branch.go1.4
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Checkout_1.4
 
-- name: Compile Go 
-  shell: CGO_ENABLED=0 ./make.bash 
+- name: Compile Go v1.4
+  shell: CGO_ENABLED=0 ./make.bash
   args:
     chdir: /usr/local/go/src
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Compile_1.4
 
-# Create Go workspace, get dependencies and make static Go binary (Target 1).
+- name: Clone Go repo 2
+  shell: mv /usr/local/go /usr/local/go1.4;
+         rm -rf "{{ ROOTGOINSTALL }}";
+         mkdir "{{ ROOTGOINSTALL }}";
+         git clone https://go.googlesource.com/go "{{ ROOTGOINSTALL }}"
+  args:
+    warn: no
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Clone_2
+
+- name: Checkout Go v1.7
+  git: repo=/usr/local/go/.git
+       dest=/usr/local/go
+       version=go1.7
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Checkout_1.7
+
+- name: Compile Go v1.7
+  environment:
+    "{{ EXPGOROOT_BOOTSTRAP }}"
+  shell: CGO_ENABLED=0 ./make.bash
+  args:
+    chdir: /usr/local/go/src
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Compile_1.7
+
+# Create Go workspace, get dependencies and make static Go binary (Target1).
 
 - name: Set Go workspace and get the gorilla
   environment:
-    "{{ EXPGOPATH }}"     
-  shell: go get github.com/gorilla/mux
+    "{{ EXPGOPATH }}"
+  shell: '"{{ ROOTGOINSTALL }}"/bin/go get github.com/gorilla/mux'
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - GoWS_Gorilla
 
 - name: Copy Go source to workspace 
-  command: "{{ item }}"
-  with_items:
-    - rm -rf "{{ ROOTGOPATH }}"/src/myip
-    - mkdir "{{ ROOTGOPATH }}"/src/myip
-    - cp "{{ ROOTGOCODE }}"/myip/myip.go "{{ ROOTGOPATH }}"/src/myip 
+  shell: rm -rf "{{ ROOTGOPATH }}"/src/getip;
+         mkdir "{{ ROOTGOPATH }}"/src/getip;
+         cp "{{ ROOTGOCODE }}"/getip/getip.go "{{ ROOTGOPATH }}"/src/getip 
+  args:
+    warn: no
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Copy_Src_GoWS
 
 - name: Make static Go binary (REST service)
   environment:
     "{{ EXPGOPATH }}"
-  shell: CGO_ENABLED=0 "{{ ROOTGOINSTALL }}"/bin/go install -a -installsuffix cgo myip
+  shell: CGO_ENABLED=0 "{{ ROOTGOINSTALL }}"/bin/go install -a -installsuffix cgo getip
   run_once: true
   delegate_to: 10.0.0.5
+  tags:
+    - Make_Go_Bin
 
-# Create Docker image with Go binary.
+# Create Docker container service utilizing Go binary.
 
-- name:
+- name: Setup Docker image creation structure 
+  shell: rm -rf "{{ USRLOCALPATH }}"/docker;
+         mkdir "{{ USRLOCALPATH }}"/docker;
+         cp "{{ ROOTDOCKER }}"/Dockerfile "{{ USRLOCALPATH }}"/docker;
+         cp "{{ USRLOCALPATH }}"/gows/bin/getip "{{ USRLOCALPATH }}"/docker
+  args:
+    warn: no
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Docker_Prep
 
+- name: Create Docker image with REST service
+  shell: tar cv --files-from /dev/null | docker import - denada;
+         docker build -t getip .;
+  args:
+    chdir: /usr/local/docker
+    warn: no
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Make_Docker_Image
 
+# Push images to registry and pull for Target2
 
+- name: Push Docker image getip to registry
+  shell: docker tag getip localhost:5000/getip:latest;
+         docker push localhost:5000/getip:latest
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Push_Image
+
+- name: Pull Docker image getip from registry for Target2
+  shell: docker pull 10.0.0.5:5000/getip:latest
+  run_once: true
+  delegate_to: 10.0.0.6
+  tags:
+    - Pull_Image
+
+# Run containers	
+
+- name: Run REST service containers registered with Weave DNS
+  shell: eval $(weave env);
+         docker run -d -h loadbalance.weave.local getip;
+         docker run -d -h loadbalance.weave.local getip;
+         docker run -d -h loadbalance.weave.local getip
+  run_once: true
+  delegate_to: "{{ item }}"
+  with_items:
+    - 10.0.0.5
+    - 10.0.0.6
+  tags:
+    - Run_getip_Cons
