@@ -18,6 +18,8 @@
       /usr/local/gows
     ROOTGOCODE:
       /vagrant/gocode/src
+    ROOTTESTCODE:
+      /vagrant/test/src
     ROOTDOCKER:
       /vagrant/docker
   roles:
