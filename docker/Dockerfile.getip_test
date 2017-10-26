@@ -1,0 +1,4 @@
+FROM ubuntu:17:04
+RUN apt-get update && install -y curl
+ADD ./lb_test.sh /usr/local/bin/
+CMD ["/bin/bash"]
