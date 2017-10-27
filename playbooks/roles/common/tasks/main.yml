@@ -35,8 +35,7 @@
     - Docker_Reg_Fix
 
 - name: Pull and run a private local Docker image registry container
-  shell: docker pull registry:latest;
-         docker run -d -p 5000:5000 registry:latest
+  shell: docker run --name private_registry -d -p 5000:5000 registry:latest
   run_once: true
   delegate_to: 10.0.0.5
   tags:
@@ -52,22 +51,22 @@
   tags:
     - Get_Weave
 
-- name: Install and launch a Weave Net (subnet allocation 10.2.0.0) - Target1
-  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16; fi
+- name: Install and launch a Weave Net (subnet allocation 10.10.0.0) - Target1
+  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.10.0.0/24; fi
   run_once: true
   delegate_to: 10.0.0.5
   tags:
     - Inst_Weave_1
 
-- name: Install and launch a Weave Net (subnet allocation 10.2.0.0) - Target2
-  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16 10.0.0.5; fi
+- name: Install and launch a Weave Net (subnet allocation 10.10.0.0) - Target2
+  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.10.0.0/24 10.0.0.5; fi
   run_once: true
   delegate_to: 10.0.0.6
   tags:
     - Inst_Weave_2
 
-- name: Install and launch a Weave Net (subnet allocation 10.2.0.0) - Target3
-  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.2.0.0/16 10.0.0.5; fi
+- name: Install and launch a Weave Net (subnet allocation 10.10.0.0) - Target3
+  shell: if [ $(docker ps -a | grep -c weaveproxy) != 1 ]; then weave launch --ipalloc-range 10.10.0.0/24 10.0.0.5; fi
   run_once: true
   delegate_to: 10.0.0.7
   tags:
@@ -183,14 +182,14 @@
 
 - name: Create Docker image with REST service
   shell: tar cv --files-from /dev/null | docker import - denada;
-         docker build -t getip .
+         docker build -t getip . -f Dockerfile.getip
   args:
     chdir: /usr/local/docker
     warn: no
   run_once: true
   delegate_to: 10.0.0.5
   tags:
-    - Make_Docker_Image
+    - Make_Docker_Image_getip
 
 # Push image to registry and pull for Target2.
 
@@ -202,40 +201,34 @@
   tags:
     - Push_Image_getip
 
-- name: Pull Docker image getip from registry for Target2
-  shell: docker pull 10.0.0.5:5000/getip:latest
+# Run getip containers upon Target1 and Target2.	
+
+- name: Run REST service containers registered with Weave DNS - Target1
+  shell: eval $(weave env);
+         docker run --name getip_REST_service_T1_1 -d -h loadbalance.weave.local localhost:5000/getip;
+         docker run --name getip_REST_service_T1_2 -d -h loadbalance.weave.local localhost:5000/getip;
+         docker run --name getip_REST_service_T1_3 -d -h loadbalance.weave.local localhost:5000/getip
+  run_once: true
+  delegate_to: 10.0.0.5
+  tags:
+    - Run_getip_Cons_1
+
+- name: Run REST service containers registered with Weave DNS - Target2
+  shell: eval $(weave env);
+         docker run --name getip_REST_service_T2_1 -d -h loadbalance.weave.local 10.0.0.5:5000/getip;
+         docker run --name getip_REST_service_T2_2 -d -h loadbalance.weave.local 10.0.0.5:5000/getip;
+         docker run --name getip_REST_service_T2_3 -d -h loadbalance.weave.local 10.0.0.5:5000/getip
   run_once: true
   delegate_to: 10.0.0.6
   tags:
-    - Pull_Image
-
-# Run getip containers.	
-
-- name: Run REST service containers registered with Weave DNS
-  shell: eval $(weave env);
-         docker run -d -h loadbalance.weave.local getip;
-         docker run -d -h loadbalance.weave.local getip;
-         docker run -d -h loadbalance.weave.local getip
-  run_once: true
-  delegate_to: "{{ item }}"
-  with_items:
-    - 10.0.0.5
-    - 10.0.0.6
-  tags:
-    - Run_getip_Cons
+    - Run_getip_Cons_2
 
 # Perform some tests via Target3.
 # Output Weave status and check that containerised app getip is load balancing.
 
 - name: Generate Weave status logs
   shell: weave status >> /var/log/weave_status.log;
-         weave dns >> /var/log/weave_status.log
-  run_once: true
-  delegate_to: "{{ item }}"
-  with_items:
-    - 10.0.0.5
-    - 10.0.0.6
-    - 10.0.0.7	
+         weave status dns >> /var/log/weave_status.log
   tags:
     - Gen_Weave_Logs
 
@@ -258,14 +251,7 @@
   tags:
     - Push_Image_getip_test
 
-- name: Pull Docker image getip_test from registry for Target3
-  shell: docker pull 10.0.0.5:5000/getip_test:latest
-  run_once: true
-  delegate_to: 10.0.0.7
-  tags:
-    - Pull_Image_getip_test
-
-- name: Run test container registered with Weave DNS and test script
+- name: Pull and run test container registered with Weave DNS and the test script
   shell: eval $(weave env);
          docker run --name handy_testy -d -ti -h test.weave.local 10.0.0.5:5000/getip_test;
          docker exec handy_testy lb_test.sh
@@ -274,4 +260,4 @@
   tags:
     - Run_getip_test_Con
 
-####################	
+####################
