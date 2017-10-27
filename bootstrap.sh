@@ -14,9 +14,11 @@ chmod 600 /home/vagrant/.ssh/*
 if [ ! -f /usr/bin/ansible-playbook ]
 then
   apt-get update
-  apt-get install -y ansible
-  rm -rf /vagrant/.vagrant/machines/*/cache/apt/partial # Take care of a small bug here as vagrant-cachier is now getting on and not maintained anymore !
+  apt-get install -y software-properties-common
+  apt-add-repository -y ppa:ansible/ansible 2> /dev/null # Hush warnings.
   apt-get update
+  apt-get --purge remove -y ansible
+  apt-get install -y ansible 2> /dev/null # Hush warnings.
 fi
 
 echo -e "[Targets]\n\n10.0.0.5\n10.0.0.6\n10.0.0.7\n" >> /etc/ansible/hosts
