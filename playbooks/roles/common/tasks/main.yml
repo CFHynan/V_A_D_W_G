@@ -191,7 +191,7 @@
   tags:
     - Make_Docker_Image_getip
 
-# Push image to registry and pull for Target2.
+# Push image to registry.
 
 - name: Push Docker image getip to registry
   shell: docker tag getip localhost:5000/getip:latest;
