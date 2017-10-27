@@ -3,12 +3,13 @@
 
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "ubuntu/trusty64" 
- 
-  # Use the cachier per VM.
+  config.vm.box = "bento/ubuntu-17.04"
+
+  # Config for the cachier: cache scope per VM and switch off auto-detection.
 
   if Vagrant.has_plugin?("vagrant-cachier")
      config.cache.scope = :machine
+	 config.cache.auto_detect = false
   end
 
   # Fix non-impacting tty error message upon provisioning: 'stdin: is not a tty'.
@@ -18,26 +19,37 @@ Vagrant.configure("2") do |config|
     s.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
   end
 
-  # Create target VM's to configure, set VM name, private IP, and open up ports to host OS.
+  # Create target VM's to configure - set VM name and private IP.
 
   config.vm.define :Target1 do |target1|
     target1.vm.network "private_network", ip: "10.0.0.5"
-    target1.vm.network :forwarded_port, guest: 80, host: 1234 
+	target1.cache.enable :apt
   end
 
   config.vm.define :Target2 do |target2|
     target2.vm.network "private_network", ip: "10.0.0.6"
+	target2.cache.enable :apt
+  end
+
+  config.vm.define :Target3 do |target3|
+    target3.vm.network "private_network", ip: "10.0.0.7"
+	target3.cache.enable :apt
   end
 
   # Create Ansible Control Machine - set VM name, private IP, bootstrap, and run playbook.
- 
+
   config.vm.define :ACM do |acm|
     acm.vm.network "private_network", ip: "10.0.0.4"
+	acm.cache.enable :apt
     acm.vm.provision :shell, path: "bootstrap.sh"
-    acm.vm.provision :shell, path: "run_playbook.sh", privileged: false
+    #acm.vm.provision :shell, path: "run_playbook.sh", privileged: false
   end
 
 end
+
+####################
+
+# Usage.
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
@@ -109,3 +121,4 @@ end
 #   apt-get install -y apache2
 # SHELL
 
+####################
