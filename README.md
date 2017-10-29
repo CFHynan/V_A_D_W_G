@@ -141,5 +141,5 @@ Typical output to show that load balancing is working fine would be similar to -
 
 ## Notes -
 
-  :small_orange_diamond: Subsequent spinning up of the environment following the initial build out is much speedier due to local caching.  
-  :small_orange_diamond: The Vagrant-Cachier plugin does not appear to be maintained, some buginess may develop as time progresses.
+:small_orange_diamond: Subsequent spinning up of the environment following the initial build out is much speedier due to local caching.  
+:small_orange_diamond: The Vagrant-Cachier plugin does not appear to be maintained, some buginess may develop as time progresses.
