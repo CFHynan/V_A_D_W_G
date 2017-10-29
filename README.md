@@ -1,5 +1,4 @@
 # V_A_D_W_G
-Repo for a virtualised Ansible/Docker/Weave centric container environment.
 
 A local IAC construct allowing for various development and test scenarios to take place.  
 Included for enjoyment is a Go app demonstrating load balancing via Weave and how outrageously small a microservice could be made.
