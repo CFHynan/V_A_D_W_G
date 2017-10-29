@@ -1,4 +1,4 @@
-// File: getip.go
+// File: getip.go - a REST based service which returns the container IP when called via /getip
 
 package main
 

@@ -6,7 +6,7 @@ Included for enjoyment is a Go app demonstrating load balancing via Weave and ho
 
 ## Prerequisites
 
-Vagrant, Vagrant-Cachier plugin, and VirtualBox installs.
+Vagrant, Vagrant-Cachier plugin, VirtualBox, and VirtualBox Extension Pack installs.
 
 https://www.vagrantup.com/downloads.html  
 https://www.virtualbox.org/wiki/Downloads
@@ -42,21 +42,105 @@ Briefly -
 <b>17</b>. Tags and pushes the Docker image to be used for test purposes to the local Docker registry.  
 <b>18</b>. Runs the test container via the registry addition and hits the test script within the container to output the results to a log file (Target3).
 
-## Notes -
+## Tests -
 
 <b>1</b>. The status of Weave may be viewed upon all targets via log -
 
 `/var/log/weave_status.log`
 
-<b>2</b>. Test script output to show the status of load balancing may be found here -
+Example output (Target1) -
+
+```
+        Version: 2.0.5 (up to date; next check at 2017/10/29 22:41:26)
+
+        Service: router
+       Protocol: weave 1..2
+           Name: ee:3b:55:53:a8:83(vagrant)
+     Encryption: disabled
+  PeerDiscovery: enabled
+        Targets: 0
+    Connections: 2 (2 established)
+          Peers: 3 (with 6 established connections)
+ TrustedSubnets: none
+
+        Service: ipam
+         Status: ready
+          Range: 10.10.0.0/24
+  DefaultSubnet: 10.10.0.0/24
+
+        Service: dns
+         Domain: weave.local.
+       Upstream: 10.0.2.3, 127.0.0.53
+            TTL: 1
+        Entries: 6
+
+        Service: proxy
+        Address: unix:///var/run/weave/weave.sock
+
+        Service: plugin (legacy)
+     DriverName: weave
+
+loadbalance  10.10.0.3       7ac8b3d1c83c ee:3b:55:53:a8:83
+loadbalance  10.10.0.1       a565f2878f91 ee:3b:55:53:a8:83
+loadbalance  10.10.0.2       c8fa5c2b48af ee:3b:55:53:a8:83
+loadbalance  10.10.0.192     049fc0d3ab38 fa:ad:1e:1b:86:c2
+loadbalance  10.10.0.193     395daf3c5183 fa:ad:1e:1b:86:c2
+loadbalance  10.10.0.194     c8f7ddf8caad fa:ad:1e:1b:86:c2
+```
+
+<b>2</b>. Test script output to show the status of load balancing may be found here (Target3) -
 
 `/var/log/lb_test.log`
 
 Attach yourself -
 
-`docker -ti exec handy_testy /bin/bash`
+`docker exec -ti handy_testy /bin/bash`
 
-Typical output to show good load balancing would be similar to -
+Typical output to show that load balancing is working fine would be similar to -
 
+```
+10.10.0.194
 
+10.10.0.3
 
+10.10.0.193
+
+10.10.0.194
+
+10.10.0.192
+
+10.10.0.3
+
+10.10.0.192
+
+10.10.0.193
+
+10.10.0.1
+
+10.10.0.194
+
+10.10.0.2
+
+10.10.0.192
+
+10.10.0.192
+
+10.10.0.1
+
+10.10.0.3
+
+10.10.0.193
+
+10.10.0.1
+
+10.10.0.1
+
+10.10.0.2
+
+10.10.0.3
+```
+
+## Notes -
+
+  :small_orange_diamond: Subsequent spinning up of the environment following the initial build out is much speedier due to local caching.  
+  :small_orange_diamond: The Vagrant-Cachier plugin does not appear to be maintained, some buginess may develop as time progresses.

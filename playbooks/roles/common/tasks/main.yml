@@ -1,5 +1,5 @@
 ---
-# file: roles/common/tasks/main.yml
+# File: roles/common/tasks/main.yml
 
 # Docker installation.
 
@@ -223,7 +223,7 @@
   tags:
     - Run_getip_Cons_2
 
-# Perform some tests via Target3.
+# Perform tests via Target3.
 # Output Weave status and check that containerised app getip is load balancing.
 
 - name: Generate Weave status logs

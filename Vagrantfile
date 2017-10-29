@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
     acm.vm.network "private_network", ip: "10.0.0.4"
 	acm.cache.enable :apt
     acm.vm.provision :shell, path: "bootstrap.sh"
-    #acm.vm.provision :shell, path: "run_playbook.sh", privileged: false
+    acm.vm.provision :shell, path: "run_playbook.sh", privileged: false
   end
 
 end
