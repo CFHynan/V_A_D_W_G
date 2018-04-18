@@ -8,8 +8,8 @@ Vagrant.configure("2") do |config|
   # Config for the cachier: cache scope per VM and switch off auto-detection.
 
   if Vagrant.has_plugin?("vagrant-cachier")
-     config.cache.scope = :machine
-	 config.cache.auto_detect = false
+    config.cache.scope = :machine
+    config.cache.auto_detect = false
   end
 
   # Fix non-impacting tty error message upon provisioning: 'stdin: is not a tty'.
@@ -23,24 +23,24 @@ Vagrant.configure("2") do |config|
 
   config.vm.define :Target1 do |target1|
     target1.vm.network "private_network", ip: "10.0.0.5"
-	target1.cache.enable :apt
+    target1.cache.enable :apt
   end
 
   config.vm.define :Target2 do |target2|
     target2.vm.network "private_network", ip: "10.0.0.6"
-	target2.cache.enable :apt
+    target2.cache.enable :apt
   end
 
   config.vm.define :Target3 do |target3|
     target3.vm.network "private_network", ip: "10.0.0.7"
-	target3.cache.enable :apt
+    target3.cache.enable :apt
   end
 
   # Create Ansible Control Machine - set VM name, private IP, bootstrap, and run playbook.
 
   config.vm.define :ACM do |acm|
     acm.vm.network "private_network", ip: "10.0.0.4"
-	acm.cache.enable :apt
+    acm.cache.enable :apt
     acm.vm.provision :shell, path: "bootstrap.sh"
     acm.vm.provision :shell, path: "run_playbook.sh", privileged: false
   end
