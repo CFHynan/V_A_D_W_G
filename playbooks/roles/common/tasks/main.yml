@@ -253,7 +253,7 @@
 
 - name: Pull and run test container registered with Weave DNS and the test script
   shell: eval $(weave env);
-         docker run --name handy_testy -d -ti -h test.weave.local 10.0.0.5:5000/getip_test;
+         docker run --name handy_testy -d -i -h test.weave.local 10.0.0.5:5000/getip_test;
          docker exec handy_testy lb_test.sh
   run_once: true
   delegate_to: 10.0.0.7
