@@ -9,7 +9,7 @@
     - Add_Docker_Key
 
 - name: Update apt with repository
-  apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-zesty main' state=present
+  apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-xenial main' state=present
   tags:
     - Add_Docker_Repo
   
@@ -233,7 +233,7 @@
     - Gen_Weave_Logs
 
 - name: Pull a Ubuntu Docker image and bake in a test script
-  shell: docker pull ubuntu:17.04;
+  shell: docker pull ubuntu:16.04;
          docker build -t getip_test . -f Dockerfile.getip_test
   args:
     chdir: /usr/local/docker
